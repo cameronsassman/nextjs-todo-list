@@ -3,13 +3,16 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 interface Task {
   id: number;
   name: string;
-  author: string; // New field
+  author: string;
+  date: string;
+  dateTime: string;
   completed: boolean;
+  image: string
 }
 
 interface TaskContextType {
   tasks: Task[];
-  addTask: (name: string, author: string) => void;
+  addTask: (name: string, author: string, dateTime: string, image: string) => void;
   editTask: (id: number, updatedName: string, updatedAuthor: string) => void;
   deleteTask: (id: number) => void;
   toggleCompletion: (id: number) => void;
@@ -31,8 +34,8 @@ export function TaskProvider({ children }: TaskProviderProps) {
     localStorage.setItem("tasks", JSON.stringify(tasks));
   }, [tasks]);
 
-  const addTask = (name: string, author: string) =>
-    setTasks([...tasks, { id: Date.now(), name, author, completed: false }]);
+  const addTask = (name: string, author: string, dateTime: string, image: string) =>
+    setTasks([...tasks, { id: Date.now(), name, author, date: new Date(dateTime).toDateString(), dateTime, completed: false, image }]);
 
   const editTask = (id: number, updatedName: string, updatedAuthor: string) =>
     setTasks(

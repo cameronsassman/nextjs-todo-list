@@ -1,4 +1,4 @@
-import { useTasks } from "@/app/lib/context";
+import { useTasks } from "@/lib/context";
 import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button"

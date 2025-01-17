@@ -1,10 +1,10 @@
-'use client'
+'use client';
 
 import { useState } from "react";
-import { Plus, RefreshCcw } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import "../../globals.css";
-import { useTasks } from "@/app/lib/context";
+import { useTasks } from "@/lib/context";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,60 +18,58 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarDays } from 'lucide-react';
+import { format } from "date-fns";
 
 const MAX_CHAR_LIMIT = 50;
-const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-const days = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
 
 export default function TaskForm({ currentTask, setCurrentTask }: any) {
   const { addTask, editTask } = useTasks();
   const [taskName, setTaskName] = useState(currentTask ? currentTask.name : "");
-  const [author, setAuthor] = useState(currentTask ? currentTask.author : ""); // New state for author
+  const [author, setAuthor] = useState(currentTask ? currentTask.author : "");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedStartTime, setSelectedStartTime] = useState("");
+  const [selectedEndTime, setSelectedEndTime] = useState("");
+  const [image, setImage] = useState("");
   const [charCount, setCharCount] = useState(0);
 
   const today = new Date();
-
-  const month = months[today.getMonth()];
-  const day = days[today.getDay() - 1];
-  const date = today.getDate();
-  const currentDate = day + ", " + date + " " + month;
+  const currentDate = today.toLocaleDateString(undefined, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    if (!taskName.trim() || !author.trim()) {
-      return alert("Both task name and author cannot be empty");
+    if (!taskName.trim() || !author.trim() || !selectedDate || !selectedStartTime || !selectedEndTime) {
+      return alert("All fields are required");
     }
 
+    const formattedDate = selectedDate.toLocaleDateString();
+    const dateTime = `${formattedDate} ${selectedStartTime} - ${selectedEndTime}`;
     if (currentTask) {
-      editTask(currentTask.id, taskName, author); // Pass author when editing
+      editTask(currentTask.id, taskName, author);
       setCurrentTask(null);
     } else {
-      addTask(taskName, author); // Pass author when adding
+      addTask(taskName, author, dateTime, image);
     }
 
     setTaskName("");
     setAuthor("");
+    setSelectedDate(undefined);
+    setSelectedStartTime("");
+    setSelectedEndTime("");
+    setImage("");
     setCharCount(0);
   };
 
@@ -81,10 +79,6 @@ export default function TaskForm({ currentTask, setCurrentTask }: any) {
       setTaskName(value);
       setCharCount(value.length);
     }
-  };
-
-  const handleAuthorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAuthor(e.target.value);
   };
 
   return (
@@ -127,16 +121,65 @@ export default function TaskForm({ currentTask, setCurrentTask }: any) {
             <Input
               type="text"
               value={author}
-              onChange={handleAuthorChange}
+              onChange={(e) => setAuthor(e.target.value)}
               placeholder="Who is responsible?"
               className="col-span-3 w-full"
             />
           </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="image" className="text-right">
+              User image
+            </Label>
+            <Input
+              type="file"
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              className="col-span-3 w-full"
+            />
+          </div>
+          <div className="justify-end">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className="flex w-3/5 justify-start text-left font-normal text-muted-foreground">
+                    <CalendarDays />
+                    <span className="pl-2.5">{selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className="justify-items-center"
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div>
+            <Select defaultValue={selectedStartTime}>
+              <SelectTrigger>
+                <SelectValue placeholder="Test"/>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="test">{selectedStartTime}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              type="time"
+              value={selectedStartTime}
+              onChange={(e) => setSelectedStartTime(e.target.value)}
+            />
+            <Input
+              type="time"
+              value={selectedEndTime}
+              onChange={(e) => setSelectedEndTime(e.target.value)}
+            />
+          </div>
           <DialogFooter>
-            <Button
-              type="submit"
-              className="flex mt-4 text-white bg-black items-center rounded-md p-3"
-            >
+            <Button type="submit" className="flex mt-4 text-white bg-black items-center rounded-md p-3">
               <Label>Save task</Label>
             </Button>
           </DialogFooter>

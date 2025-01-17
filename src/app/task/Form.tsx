@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
-import { TaskProvider } from "../lib/context";
+import { TaskProvider } from "../../lib/context";
 import TaskForm from "./TaskForm/form";
 import TaskList from "./TaskList/list";
 

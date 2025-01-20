@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarDays } from 'lucide-react';
 import { format } from "date-fns";
 
@@ -37,10 +38,10 @@ export default function TaskForm({ currentTask, setCurrentTask }: any) {
   const [taskName, setTaskName] = useState(currentTask ? currentTask.name : "");
   const [author, setAuthor] = useState(currentTask ? currentTask.author : "");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedStartTime, setSelectedStartTime] = useState("");
-  const [selectedEndTime, setSelectedEndTime] = useState("");
-  const [image, setImage] = useState("");
+  const [selectedStartTime, setSelectedStartTime] = useState("08:00");
+  const [selectedEndTime, setSelectedEndTime] = useState("17:00");
   const [charCount, setCharCount] = useState(0);
+  const [images, setImages] = useState<string[]>([]);
 
   const today = new Date();
   const currentDate = today.toLocaleDateString(undefined, {
@@ -61,7 +62,7 @@ export default function TaskForm({ currentTask, setCurrentTask }: any) {
       editTask(currentTask.id, taskName, author);
       setCurrentTask(null);
     } else {
-      addTask(taskName, author, dateTime, image);
+      addTask(taskName, author, dateTime, images);
     }
 
     setTaskName("");
@@ -69,8 +70,27 @@ export default function TaskForm({ currentTask, setCurrentTask }: any) {
     setSelectedDate(undefined);
     setSelectedStartTime("");
     setSelectedEndTime("");
-    setImage("");
+    setImages([]);
     setCharCount(0);
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newImages: string[] = [];
+      Array.from(files).forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (reader.result) {
+            newImages.push(reader.result as string);
+            if (newImages.length === files.length) {
+              setImages((prevImages) => [...prevImages, ...newImages]);
+            }
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,9 +109,9 @@ export default function TaskForm({ currentTask, setCurrentTask }: any) {
           <Label className="text-gray-500">{currentDate}</Label>
         </div>
         <DialogTrigger asChild className="px-6 gap-1.5">
-          <Button className="flex text-blue-700 bg-blue-200 items-center rounded-2xl">
+          <Button className="flex text-blue-700 bg-sky-100 items-center rounded-2xl">
             <Plus color="#1d4ed8" strokeWidth={1.75} />
-            <Label className="cursor-pointer text-base">New task</Label>
+            <Label className="cursor-pointer text-base">New Task</Label>
           </Button>
         </DialogTrigger>
       </div>
@@ -127,23 +147,24 @@ export default function TaskForm({ currentTask, setCurrentTask }: any) {
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="image" className="text-right">
-              User image
+            <Label htmlFor="author" className="text-right">
+              User icon
             </Label>
-            <Input
+            <Input 
               type="file"
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
+              accept="image/*" 
+              multiple 
+              onChange={handleImageUpload}
               className="col-span-3 w-full"
             />
           </div>
-          <div className="justify-end">
+          <div className="flex gap-1 h-9">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
                   className="flex w-3/5 justify-start text-left font-normal text-muted-foreground">
-                    <CalendarDays />
+                    <CalendarDays size={20}/>
                     <span className="pl-2.5">{selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}</span>
                 </Button>
               </PopoverTrigger>
@@ -157,26 +178,54 @@ export default function TaskForm({ currentTask, setCurrentTask }: any) {
                 />
               </PopoverContent>
             </Popover>
-          </div>
-          <div>
-            <Select defaultValue={selectedStartTime}>
-              <SelectTrigger>
-                <SelectValue placeholder="Test"/>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="test">{selectedStartTime}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              type="time"
-              value={selectedStartTime}
-              onChange={(e) => setSelectedStartTime(e.target.value)}
-            />
-            <Input
-              type="time"
-              value={selectedEndTime}
-              onChange={(e) => setSelectedEndTime(e.target.value)}
-            />
+            <div >
+              <Select defaultValue={selectedStartTime!} onValueChange={(e) => setSelectedStartTime(e)} >
+                <SelectTrigger className="w-auto">
+                  <SelectValue/>
+                </SelectTrigger>
+                <SelectContent>
+                <ScrollArea>
+                  {Array.from({ length: 96 }).map((_, i) => {
+                    const hour = Math.floor(i / 4)
+                      .toString()
+                      .padStart(2, "0");
+                    const minute = ((i % 4) * 15)
+                      .toString()
+                      .padStart(2, "0");
+                    return (
+                      <SelectItem key={i} value={`${hour}:${minute}`}>
+                        {hour}:{minute}
+                      </SelectItem>
+                    );
+                  })}
+                </ScrollArea>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Select defaultValue={selectedEndTime!} onValueChange={(e) => setSelectedEndTime(e)}>
+                <SelectTrigger className="w-auto">
+                  <SelectValue/>
+                </SelectTrigger>
+                <SelectContent>
+                <ScrollArea >
+                  {Array.from({ length: 96 }).map((_, i) => {
+                    const hour = Math.floor(i / 4)
+                      .toString()
+                      .padStart(2, "0");
+                    const minute = ((i % 4) * 15)
+                      .toString()
+                      .padStart(2, "0");
+                    return (
+                      <SelectItem key={i} value={`${hour}:${minute}`}>
+                        {hour}:{minute}
+                      </SelectItem>
+                    );
+                  })}
+                </ScrollArea>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button type="submit" className="flex mt-4 text-white bg-black items-center rounded-md p-3">

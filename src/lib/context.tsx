@@ -7,15 +7,18 @@ interface Task {
   date: string;
   dateTime: string;
   completed: boolean;
-  image: string
+  archived: boolean;
+  image?: string[];
 }
 
 interface TaskContextType {
   tasks: Task[];
-  addTask: (name: string, author: string, dateTime: string, image: string) => void;
+  archivedTasks: Task[];
+  addTask: (name: string, author: string, dateTime: string, image: string[]) => void;
   editTask: (id: number, updatedName: string, updatedAuthor: string) => void;
   deleteTask: (id: number) => void;
   toggleCompletion: (id: number) => void;
+  toggleArchive: (id: number) => void;
 }
 
 interface TaskProviderProps {
@@ -34,15 +37,13 @@ export function TaskProvider({ children }: TaskProviderProps) {
     localStorage.setItem("tasks", JSON.stringify(tasks));
   }, [tasks]);
 
-  const addTask = (name: string, author: string, dateTime: string, image: string) =>
-    setTasks([...tasks, { id: Date.now(), name, author, date: new Date(dateTime).toDateString(), dateTime, completed: false, image }]);
+  const addTask = (name: string, author: string, dateTime: string, image: string[] = []) =>
+    setTasks([...tasks, { id: Date.now(), name, author, date: new Date(dateTime).toDateString(), dateTime, completed: false, archived: false, image }]);
 
   const editTask = (id: number, updatedName: string, updatedAuthor: string) =>
     setTasks(
       tasks.map((task) =>
-        task.id === id
-          ? { ...task, name: updatedName, author: updatedAuthor }
-          : task
+        task.id === id ? { ...task, name: updatedName, author: updatedAuthor } : task
       )
     );
 
@@ -56,9 +57,24 @@ export function TaskProvider({ children }: TaskProviderProps) {
       )
     );
 
+  const toggleArchive = (id: number) =>
+    setTasks(
+      tasks.map((task) =>
+        task.id === id ? { ...task, archived: !task.archived } : task
+      )
+    );
+
   return (
     <TaskContext.Provider
-      value={{ tasks, addTask, editTask, deleteTask, toggleCompletion }}
+      value={{
+        tasks: tasks.filter((task) => !task.archived),
+        archivedTasks: tasks.filter((task) => task.archived),
+        addTask,
+        editTask,
+        deleteTask,
+        toggleCompletion,
+        toggleArchive,
+      }}
     >
       {children}
     </TaskContext.Provider>
